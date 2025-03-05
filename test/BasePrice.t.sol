@@ -4,12 +4,18 @@ pragma solidity ^0.8.13;
 import {Test, console} from "forge-std/Test.sol";
 import {BasePrice} from "../src/BasePrice.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Vault} from "../src/Vault.sol" ;
 
 contract BasePriceTest is Test {
     address public weth = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
     address public usdc = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8;
 
     BasePrice public basePrice;
+    Vault public vault;
+
+    address alice = makeAddr("alice");
+    address bob = makeAddr("bob");
+    address brown = makeAddr("brown");
 
     function setUp() public {
         vm.createSelectFork("https://arb-mainnet.g.alchemy.com/v2/Ea4M-V84UObD22z2nNlwDD9qP8eqZuSI", 306368675);
@@ -20,13 +26,16 @@ contract BasePriceTest is Test {
         // set balance USDC dan WETH
         deal(usdc, address(this), 2000e6);
         deal(weth, address(this), 200e18);
+        deal(weth, alice, 1e18);
+        deal(weth,bob,100_000e18);
+        deal(usdc,brown,1000_000_000e6);
     }
 
     function test_floor() public {
         IERC20(usdc).approve(address(basePrice), 1000e6);
 
         // skenario 1: mint pertama
-        basePrice.mintFloor(1000e6);
+        vault.mintFloor(1000e6);
         // floorTokendId tidak boleh 0
         assertNotEq(basePrice.floorTokenId(), 0);
         console.log("floorTokenId", basePrice.floorTokenId());
@@ -34,11 +43,16 @@ contract BasePriceTest is Test {
         // skenario 2: mint kedua misal dapat 1000e6 dari treasury
         uint256 floorTokenIdBefore = basePrice.floorTokenId();
         IERC20(usdc).approve(address(basePrice), 1000e6);
-        basePrice.mintFloor(1000e6);
+        vault.mintFloor(1000e6);
 
         // floorTokendId tidak boleh sama dengan sebelumnya
         assertNotEq(basePrice.floorTokenId(), floorTokenIdBefore);
         console.log("floorTokenId", basePrice.floorTokenId());
+
+        
+
+
+
     }
 
     function test_discovery() public {
